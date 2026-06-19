@@ -6,11 +6,11 @@ A tiny, source-agnostic read-cursor ledger for AI agents.
 sources such as Slack, email, GitHub, and issue trackers, in one local key-value
 store exposed through a single CLI. No server, no port, no daemon.
 
-Built in Go and shipped as a single static binary. No runtime required, and
-release binaries are checksummed and signed so you can verify them.
+Built in Go and shipped as a single static binary. No runtime required. Release
+binaries are checksummed and the checksum file is signed.
 
-> Status: design locked, implementation not started. See
-> `IMPLEMENTATION_PLAN.md`.
+> Status: v1 implementation ready. Release and Homebrew publishing are wired
+> through GoReleaser; see `docs/release.md`.
 
 ## Why
 
@@ -58,18 +58,56 @@ service-side read flags, no HTTP, no port, no daemon.
   whatever integer carries enough precision for that source. Slack can use the
   ts as microseconds, GitHub can use a comment id.
 
-## CLI sketch
+## Install
+
+After the first public release:
 
 ```
-readmarker get     <source_key>           # print last read position
-readmarker advance <source_key> <pos>     # move forward, atomic max
+brew install --cask arcmanagement/readmarker/readmarker
+```
+
+You can also install from source once the repository is public:
+
+```
+go install github.com/arcmanagement/readmarker/cmd/readmarker@latest
+```
+
+## CLI
+
+```
+readmarker get     <source_key>           # print last read position, 0 if unknown
+readmarker advance <source_key> <pos>     # move forward, atomic max, print final cursor
 readmarker list    [--json]               # all source_key and positions
-readmarker set     <source_key> <pos>     # force-write a position, recovery only
+readmarker set     <source_key> <pos>     # force-write a position, print final cursor
 ```
 
 `advance` only ever moves forward, taking the max of current and new, so
 re-reading never rewinds the cursor. `set` ignores that rule and is meant only
 for fixing a mistaken position.
+
+Use `--db <path>` to point at a specific ledger file, or set `READMARKER_DB`.
+Without either, readmarker stores data under `~/Library/Application Support` on
+macOS and under the XDG data directory on Linux.
+
+`list` emits tab-separated rows by default:
+
+```
+slack:workspace:channel	123
+```
+
+`list --json` emits:
+
+```json
+[
+  {
+    "source_key": "slack:workspace:channel",
+    "cursor": 123
+  }
+]
+```
+
+Exit codes are stable: `0` for success, `1` for runtime or storage errors, and
+`2` for usage errors.
 
 Unread detection lives outside readmarker. The agent opens a source, fetches the
 current messages, calls `get`, keeps the messages newer than the cursor, then
