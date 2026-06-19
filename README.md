@@ -3,8 +3,8 @@
 A tiny, source-agnostic read-cursor ledger for AI agents.
 
 `readmarker` tracks how far an agent has read across any number of communication
-sources such as Slack, email, GitHub, and issue trackers, in one local SQLite
-ledger exposed through a single CLI. No server, no port, no daemon.
+sources such as Slack, email, GitHub, and issue trackers, in one local key-value
+store exposed through a single CLI. No server, no port, no daemon.
 
 Built in Go and shipped as a single static binary. No runtime required, and
 release binaries are checksummed and signed so you can verify them.
@@ -36,7 +36,8 @@ standalone, cross-source tool.
 
 ## What it is / isn't
 
-readmarker holds only the cursor. The other two layers already exist.
+readmarker holds only the cursor, meaning how far the agent has read. The other
+two layers already exist.
 
 | Layer | Who owns it |
 |---|---|
@@ -44,58 +45,55 @@ readmarker holds only the cursor. The other two layers already exist.
 | What's currently in the source | the source itself, such as the Slack API |
 | How far the agent has read | readmarker — the gap nobody fills |
 
-Non-goals: no message-body storage, no touching service-side read flags, no
-HTTP, no port, no daemon.
+Non-goals: no unread tracking, no message-body storage, no touching
+service-side read flags, no HTTP, no port, no daemon.
 
 ## Model
 
 - `source_key` is an opaque string identifying one stream, such as
   `slack:<ws>:<channel>`, `chatwork:<room>`, or `github:<repo>#<n>`. readmarker
   never parses it, so new sources cost zero code.
-- The cursor value is normalized to epoch ms, so cross-source comparison is just
-  a numeric `>`. Converting a raw ts or id to epoch is the caller's job, which
-  keeps readmarker source-agnostic.
-- `status` is optional. `pending` means read but not yet acted on. This lets the
-  ledger answer "read but un-handled", which a plain unread badge can't.
+- The cursor is a monotonically increasing integer, compared only within the
+  same `source_key`. There is no cross-source comparison, so the caller picks
+  whatever integer carries enough precision for that source. Slack can use the
+  ts as microseconds, GitHub can use a comment id.
 
 ## CLI sketch
 
 ```
-readmarker get     <source_key>                 # last read position
-readmarker advance <source_key> <epoch_ms>      # move forward, monotonic max
-readmarker check   <source_key> --latest <ms>   # is there unread? latest > cursor
-readmarker list    [--unread]                   # all sources, or only ones with unread
-readmarker mark    <source_key> --status pending
+readmarker get     <source_key>           # print last read position
+readmarker advance <source_key> <pos>     # move forward, atomic max
+readmarker list    [--json]               # all source_key and positions
+readmarker set     <source_key> <pos>     # force-write a position, recovery only
 ```
 
 `advance` only ever moves forward, taking the max of current and new, so
-re-reading never rewinds the cursor. For unread detection the caller passes the
-source's current latest and readmarker compares. readmarker itself never
-fetches.
+re-reading never rewinds the cursor. `set` ignores that rule and is meant only
+for fixing a mistaken position.
+
+Unread detection lives outside readmarker. The agent opens a source, fetches the
+current messages, calls `get`, keeps the messages newer than the cursor, then
+calls `advance` after reading. readmarker supplies the position; the comparison
+happens in the caller, typically a thin per-source adapter.
 
 ## Storage
 
-A single local SQLite file is the source of truth.
+bbolt, a pure-Go embedded key-value store, holds the source of truth in one
+local file. A single bucket maps each `source_key` to its cursor position.
+Transactions give atomic updates and crash safety, and there is no cgo, so the
+binary stays single-file and cross-compiles cleanly.
 
-```sql
-CREATE TABLE cursors (
-  source_key   TEXT PRIMARY KEY,
-  last_pos     INTEGER NOT NULL,   -- epoch ms
-  last_read_at INTEGER NOT NULL,
-  status       TEXT,               -- NULL, 'pending', ...
-  note         TEXT
-);
-```
-
-A remote HTTP layer can wrap this later without changing the source of truth.
+The data is just a key to an integer, so a key-value store fits and SQL is
+unnecessary. To inspect the ledger, use `readmarker list --json` rather than an
+external DB tool.
 
 ## Roadmap
 
 - thread-level granularity. Slack thread replies arrive out of band, after the
   channel's last ts.
 - optional HTTP wrapper for remote and cloud agents
-- per-source adapter helpers that convert a raw ts or id to epoch ms and fetch
-  the latest
+- per-source adapter helpers that turn a raw ts or id into the cursor integer
+  and fetch the current latest
 
 ## Governance note
 
