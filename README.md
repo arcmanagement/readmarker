@@ -6,6 +6,9 @@ A tiny, source-agnostic **read-cursor ledger for AI agents**.
 communication sources — Slack, email, GitHub, issue trackers — in one local
 SQLite ledger, exposed through a single CLI. No server, no port, no daemon.
 
+Built in **Go** and shipped as a single static binary — no runtime required,
+and release binaries are checksummed/signed so you can verify them.
+
 > Status: design locked, implementation not started. See
 > [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md).
 

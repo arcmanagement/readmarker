@@ -1,40 +1,45 @@
 # Implementation Plan — readmarker
 
 Design is locked (see [`README.md`](./README.md) for the model and the
-competitive gap). This document is the build plan, opened for review **before
-any code lands**.
+competitive gap). Stack **decided: Go**. This document is the build plan.
 
-## Proposed stack
+## Stack: Go (decided)
 
-Recommendation: **Node.js + TypeScript + `better-sqlite3`**.
+A single static binary is the deciding factor — a CLI tool should ship as a
+binary:
 
-| Option | Pros | Cons |
-|---|---|---|
-| **Node/TS + better-sqlite3** (recommended) | matches arcm's Vitest standard; `npx readmarker` for zero-install use; synchronous SQLite API is ideal for a short-lived CLI; strong OSS ecosystem | requires a Node runtime |
-| Go | single static binary, no runtime | not the arcm stack; SQLite needs cgo / modernc |
-| Python | stdlib `sqlite3`, no deps | distribution via pipx; off arcm's TS standard |
-| bash + `sqlite3` CLI | tiniest footprint | weak tests / maintainability |
+- **tamper-evident** — ship with checksums / signatures so users can verify the
+  binary matches the author's build. A mutable `node_modules` (plain, runtime-
+  loaded JS) can't be verified the same way and is easy to alter unnoticed.
+- **no runtime dependency** — no Node / Python required, so the distributable
+  range is widest (`brew`, direct download, `go install`).
+- **fast startup** (~5ms) for a CLI that agents hit frequently.
+- **small supply-chain surface** — dependencies compiled in, no install scripts,
+  no runtime module resolution.
+- SQLite via **`modernc.org/sqlite`** (pure Go, no cgo) → trivial
+  cross-compilation (mac / linux / win via `GOOS`).
 
-**Decision pending owner approval.** Everything below assumes the recommended
-stack; swapability is high since the surface is tiny.
+Rejected: **Node/TS** & **Python** (runtime required + interpreted-package
+supply chain); **Rust** (overkill for an I/O-bound tool, higher dev cost — Go's
+startup and binary size are already enough for this scope).
 
 ## Phases
 
-- **Phase 0 — scaffold** (after stack approval): `package.json`, `tsconfig.json`,
-  `vitest.config.ts`, `biome.json`, CI (`lint` / `typecheck` / `test` / `build`).
-  This is the deferred bootstrap Step 4/5.
+- **Phase 0 — scaffold**: `go.mod`, `modernc.org/sqlite`, CI (`go vet` /
+  `go test` / `go build`), GoReleaser for checksummed + signed release binaries.
 - **Phase 1 — core**: SQLite schema + cursor store. `get` / `advance` (monotonic
   max) / `check` / `list` / `mark`. Source of truth = one local SQLite file;
   path via `--db` flag / env var, default under XDG / `Application Support`.
-- **Phase 2 — CLI**: arg parsing, **stable exit codes** (`check` exits non-zero
-  when unread exists, so it composes in shell pipelines), `--json` output mode.
-- **Phase 3 — tests** (Vitest): every subcommand; `advance` never rewinds;
+- **Phase 2 — CLI**: arg parsing (`cobra` or stdlib `flag`), **stable exit
+  codes** (`check` exits non-zero when unread exists, so it composes in shell
+  pipelines), `--json` output mode.
+- **Phase 3 — tests** (`go test`): every subcommand; `advance` never rewinds;
   epoch cross-source comparison; `status` transitions; unknown / empty
   `source_key`.
-- **Phase 4 — docs & publish**: finalize README, add usage examples (Slack /
-  GitHub adapters shown as *examples*, not built in), flip the repo to
-  **public**, then apply branch-protection Rulesets (blocked while private on
-  the current plan — until then, PR-only, no direct push to `main`).
+- **Phase 4 — release**: finalize README + usage examples, GoReleaser pipeline
+  (checksums + signature), flip the repo to **public**, then apply
+  branch-protection Rulesets (blocked while private on the current plan — until
+  then, PR-only, no direct push to `main`).
 
 ## Out of scope (v1)
 
@@ -51,6 +56,5 @@ stack; swapability is high since the surface is tiny.
 
 ## Build handoff
 
-Implementation runs in a separate repo session / subagent (brain stops at plan
-+ scaffold review). Phase 1 onward is a clean, well-scoped task once the stack
-is approved.
+Implementation runs in a separate repo session / subagent (brain stops at the
+plan). Phase 1 onward is a clean, well-scoped task now that the stack is fixed.
