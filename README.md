@@ -61,7 +61,7 @@ service-side read flags, no HTTP, no port, no daemon.
 ## Install
 
 ```
-brew install --cask arcmanagement/readmarker/readmarker
+brew install arcmanagement/readmarker/readmarker
 ```
 
 You can also install from source once the repository is public:
