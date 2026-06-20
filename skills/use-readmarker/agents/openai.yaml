@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use Readmarker"
+  short_description: "Track cross-source read cursors"
+  default_prompt: "Use $use-readmarker to track what this agent has already read across a Slack channel, GitHub issue, email thread, or other source."

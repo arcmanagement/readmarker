@@ -60,8 +60,6 @@ service-side read flags, no HTTP, no port, no daemon.
 
 ## Install
 
-After the first public release:
-
 ```
 brew install --cask arcmanagement/readmarker/readmarker
 ```
@@ -71,6 +69,22 @@ You can also install from source once the repository is public:
 ```
 go install github.com/arcmanagement/readmarker/cmd/readmarker@latest
 ```
+
+## Agent skill
+
+readmarker ships an official agent skill at `skills/use-readmarker`. The skill
+teaches agents how to choose `source_key` values, compare fetched source items
+against the stored cursor, and call `advance` only after a successful review.
+
+Install the skill with the Skills CLI:
+
+```
+npx skills add arcmanagement/readmarker --skill use-readmarker --agent codex --global
+```
+
+The readmarker CLI provides the ledger and the official skill content. Agent
+specific skill installation, updates, and removal are handled by the skill
+installer, not by `readmarker` itself.
 
 ## CLI
 
