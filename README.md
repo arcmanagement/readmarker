@@ -132,6 +132,21 @@ slack:workspace:channel	123
 Exit codes are stable: `0` for success, `1` for runtime or storage errors, and
 `2` for usage errors.
 
+## Shell completion
+
+readmarker ships a Kiro CLI autocomplete spec at `completions/readmarker.js`.
+Kiro loads plain `.js` specs from its configured Specs folder; `.ts` specs are
+not loaded. Copy the file into that folder:
+
+```
+cp completions/readmarker.js <kiro-specs-folder>/readmarker.js
+```
+
+The spec completes readmarker subcommands, options, file paths for `--db`, and
+known `source_key` values. Source keys are read dynamically from
+`readmarker list`, so the dropdown reflects the current local ledger without a
+regeneration step.
+
 Unread detection lives outside readmarker. The agent opens a source, fetches the
 current messages, calls `get`, keeps the messages newer than the cursor, then
 calls `advance` after reading. readmarker supplies the position; the comparison
