@@ -50,8 +50,15 @@ brews:
       - readmarker
     repository:
       owner: arcmanagement
-      name: homebrew-readmarker
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      name: readmarker
+      token: "{{ .Env.GITHUB_TOKEN }}"
+      branch: goreleaser-homebrew-{{ .Version }}
+      pull_request:
+        enabled: true
+        base:
+          owner: arcmanagement
+          name: readmarker
+          branch: main
     directory: Formula
     homepage: https://github.com/arcmanagement/readmarker
     description: Source-agnostic read-cursor ledger for AI agents

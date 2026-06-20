@@ -61,7 +61,16 @@ service-side read flags, no HTTP, no port, no daemon.
 ## Install
 
 ```
-brew install arcmanagement/readmarker/readmarker
+brew tap arcmanagement/readmarker https://github.com/arcmanagement/readmarker
+brew install readmarker
+```
+
+If you previously installed readmarker from the old split tap, retap once:
+
+```
+brew untap arcmanagement/readmarker
+brew tap arcmanagement/readmarker https://github.com/arcmanagement/readmarker
+brew reinstall readmarker
 ```
 
 You can also install from source once the repository is public:
