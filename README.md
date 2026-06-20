@@ -62,6 +62,7 @@ service-side read flags, no HTTP, no port, no daemon.
 
 ```
 brew tap arcmanagement/readmarker https://github.com/arcmanagement/readmarker
+brew trust --formula arcmanagement/readmarker/readmarker
 brew install readmarker
 ```
 
@@ -70,6 +71,7 @@ If you previously installed readmarker from the old split tap, retap once:
 ```
 brew untap arcmanagement/readmarker
 brew tap arcmanagement/readmarker https://github.com/arcmanagement/readmarker
+brew trust --formula arcmanagement/readmarker/readmarker
 brew reinstall readmarker
 ```
 

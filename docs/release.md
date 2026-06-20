@@ -46,6 +46,7 @@ gh release view v0.1.0 --repo arcmanagement/readmarker
 brew update
 brew untap arcmanagement/readmarker
 brew tap arcmanagement/readmarker https://github.com/arcmanagement/readmarker
+brew trust --formula arcmanagement/readmarker/readmarker
 brew install readmarker
 readmarker --version
 ```
