@@ -87,15 +87,31 @@ readmarker ships an official agent skill at `skills/use-readmarker`. The skill
 teaches agents how to choose `source_key` values, compare fetched source items
 against the stored cursor, and call `advance` only after a successful review.
 
-Install the skill with the Skills CLI:
+Use the Skills CLI as the primary install and management path. First verify the
+published skill is detected:
+
+```
+npx skills add arcmanagement/readmarker --skill use-readmarker --list
+```
+
+Then install it for the agents that should use readmarker:
 
 ```
 npx skills add arcmanagement/readmarker --skill use-readmarker --agent codex --global
 ```
 
+Day-to-day management also stays in the same CLI surface:
+
+```
+npx skills list --global --agent codex
+npx skills update --global use-readmarker
+npx skills remove use-readmarker --global --agent codex --yes
+```
+
 The readmarker CLI provides the ledger and the official skill content. Agent
-specific skill installation, updates, and removal are handled by the skill
-installer, not by `readmarker` itself.
+specific skill installation, updates, and removal are handled by the Skills CLI,
+not by `readmarker` itself. Manual copying into agent skill directories is a
+fallback-only path for environments where `npx skills` cannot run.
 
 ## CLI
 

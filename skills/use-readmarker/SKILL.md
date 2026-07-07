@@ -32,12 +32,22 @@ install the CLI and, if useful, the official agent skill:
 
 ```bash
 brew install --cask arcmanagement/readmarker/readmarker
+npx skills add arcmanagement/readmarker --skill use-readmarker --list
 npx skills add arcmanagement/readmarker --skill use-readmarker --agent codex --global
 ```
 
-The skill installer owns agent-specific installation. Do not write directly to
-`~/.codex/skills`, `~/.claude/skills`, or other agent skill directories unless
-the user explicitly asks for manual installation.
+Use the same Skills CLI for day-to-day management:
+
+```bash
+npx skills list --global --agent codex
+npx skills update --global use-readmarker
+npx skills remove use-readmarker --global --agent codex --yes
+```
+
+The skill installer owns agent-specific installation. Manual writes to
+`~/.codex/skills`, `~/.claude/skills`, or other agent skill directories are
+fallback-only and should be used only when `npx skills` cannot run or the user
+explicitly asks for manual installation.
 
 ## Source Keys
 
